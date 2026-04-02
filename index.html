@@ -14,6 +14,7 @@
   ::-webkit-scrollbar-track{background:#111}
   ::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
   @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes spin{to{transform:rotate(360deg)}}
   .container{max-width:1200px;margin:0 auto;padding:24px 20px}
   .btn{padding:8px 16px;border-radius:8px;border:none;background:#e94560;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:opacity .2s}
   .btn:hover{opacity:.85}.btn:disabled{opacity:.4;cursor:default}
@@ -29,9 +30,6 @@
   .mb h3{margin:0 0 16px;color:#e94560;font-size:18px}
   .dp-tr{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;font-size:13px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;margin-bottom:6px;color:#fff}
   .dp-dd{position:absolute;top:100%;left:0;margin-top:4px;z-index:200;background:#1a1a1a;border:1px solid #444;border-radius:12px;padding:14px;width:290px;box-shadow:0 16px 48px rgba(0,0,0,.7)}
-  .dp-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
-  .dp-nav button{background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:4px 8px}
-  .dp-nav select{padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px;cursor:pointer;font-family:inherit}
   .dp-wk{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
   .dp-d{padding:6px;margin:1px;border-radius:6px;border:none;font-size:13px;cursor:pointer;font-family:inherit;background:transparent;color:#ccc}
   .dp-d:disabled{color:transparent;cursor:default}
@@ -41,21 +39,17 @@
   .dp-d.we.sel{color:#fff;text-decoration:none}
   .qb{padding:4px 12px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:12px;cursor:pointer;font-family:inherit}
   .card{background:#111;border-radius:12px;border:1px solid #222;padding:16px;position:relative}
-  .sync-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
-  .sync-bar .status{font-size:11px;color:#555}
   .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2000}
   .loading-box{background:#1a1a1a;border-radius:12px;padding:24px 40px;text-align:center;border:1px solid #333}
-  .loading-box .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
-  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 </style>
 </head>
 <body>
-
 <div class="container" id="app"></div>
-
 <script>
 // ─── CONFIG ───
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybBxn5erNpEN23ysAUywqHDgDzMveDt4YR8tFVD03II2Ve1TMoAQuwbpMdYzsMDim-/exec';
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/1s9w-Eop2gUZwfhl7lT_BDffPjom7xY4uvsPZ0Q-qWLw/edit';
 
 const MS_DEFS = [
   {key:'layout',label:'平配圖',color:'#e94560',phase:1,biz:0},
@@ -65,10 +59,10 @@ const MS_DEFS = [
   {key:'install',label:'閉店後施工',color:'#8e44ad',phase:4,biz:3},
   {key:'complete',label:'施工完成',color:'#2ecc71',phase:4,biz:3},
 ];
-const CUM_BIZ = [0,0,10,18,21,24];
-const PH_BG = {1:'linear-gradient(135deg,#e94560,#1a1a2e)',2:'linear-gradient(135deg,#0f3460,#16213e)',3:'linear-gradient(135deg,#533483,#1a1a2e)',4:'linear-gradient(135deg,#8e44ad,#2ecc71)'};
+const CUM_BIZ=[0,0,10,18,21,24];
+const PH_BG={1:'linear-gradient(135deg,#e94560,#1a1a2e)',2:'linear-gradient(135deg,#0f3460,#16213e)',3:'linear-gradient(135deg,#533483,#1a1a2e)',4:'linear-gradient(135deg,#8e44ad,#2ecc71)'};
 
-// ─── Date utils ───
+// ─── Date ───
 const toDS=(y,m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
 const addD=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0]};
 const diffD=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
@@ -83,93 +77,96 @@ const dimM=(y,m)=>new Date(y,m,0).getDate();
 const fowM=(y,m)=>new Date(y,m-1,1).getDay();
 
 // ─── State ───
-let campaigns=[];
-let syncing=false, lastSync='', dialogForm=null, toastTimer=null, loading=false;
+let campaigns=[], lastSync='', dialogForm=null, toastTimer=null;
 let openPI=-1, pY=new Date().getFullYear(), pM=new Date().getMonth()+1;
 
-// ─── API ───
-async function apiCall(action, data) {
-  const res = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: {'Content-Type':'text/plain'},
-    body: JSON.stringify({action, data})
+// ─── JSONP 呼叫 Apps Script（解決 CORS）───
+let jsonpCounter = 0;
+function jsonpCall(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_jsonp_cb_' + (++jsonpCounter) + '_' + Date.now();
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      reject(new Error('請求逾時，請檢查 Apps Script 部署'));
+    }, 30000);
+
+    window[cbName] = function(data) {
+      clearTimeout(timeout);
+      delete window[cbName];
+      const script = document.getElementById(cbName);
+      if (script) script.remove();
+      resolve(data);
+    };
+
+    const qs = Object.entries(params).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+    const script = document.createElement('script');
+    script.id = cbName;
+    script.src = `${SCRIPT_URL}?callback=${cbName}&${qs}`;
+    script.onerror = () => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      reject(new Error('網路錯誤'));
+    };
+    document.body.appendChild(script);
   });
-  return await res.json();
 }
 
 function showLoading(msg) {
-  loading = msg || '處理中...';
   const el = document.getElementById('loading');
-  if (el) { el.style.display = 'flex'; el.querySelector('.msg').textContent = loading; }
+  if (el) { el.style.display='flex'; el.querySelector('.msg').textContent=msg||'處理中...'; }
 }
 function hideLoading() {
-  loading = false;
   const el = document.getElementById('loading');
-  if (el) el.style.display = 'none';
+  if (el) el.style.display='none';
 }
-
 function showToast(msg,type='info') {
   clearTimeout(toastTimer);
   const el=document.getElementById('toast');
-  el.textContent=msg;el.className=`toast ${type==='error'?'err':type==='success'?'ok':'info'}`;
+  if(!el)return;
+  el.textContent=msg;
+  el.className=`toast ${type==='error'?'err':type==='success'?'ok':'info'}`;
   el.style.display='block';
   toastTimer=setTimeout(()=>{el.style.display='none'},3000);
 }
 
-// ─── Sync (Read) ───
+// ─── API Calls ───
 async function syncRead() {
   showLoading('從 Google Sheets 讀取中...');
   try {
-    const res = await apiCall('read');
+    const res = await jsonpCall({ action: 'read' });
     if (res.success) {
       campaigns = (res.campaigns||[]).map(c => ({
-        id: c.id,
-        contact: c.contact||'',
-        name: c.name||'',
-        window: c.window||'',
-        milestones: MS_DEFS.map(def => ({
-          key: def.key, label: def.label, date: c[def.key]||''
-        })),
-        note: ''
+        id:c.id, contact:c.contact||'', name:c.name||'', window:c.window||'', note:'',
+        milestones: MS_DEFS.map(def => ({ key:def.key, label:def.label, date:c[def.key]||'' }))
       }));
       lastSync = new Date().toLocaleTimeString();
       showToast(`同步成功：${campaigns.length} 個檔期`, 'success');
     } else {
-      showToast('同步失敗：'+(res.error||'未知錯誤'), 'error');
+      showToast('同步失敗：'+(res.error||''), 'error');
     }
   } catch(e) { showToast('同步失敗：'+e.message, 'error'); }
   hideLoading(); render();
 }
 
-// ─── Save to Sheets ───
 async function saveToSheets(c) {
   showLoading('儲存到 Google Sheets...');
   try {
-    const flat = {
-      id: c.id,
-      contact: c.contact,
-      name: c.name,
-      window: c.window||'',
-    };
+    const flat = { id:c.id, contact:c.contact, name:c.name, window:c.window||'' };
     c.milestones.forEach(ms => { flat[ms.key] = ms.date||''; });
-    const res = await apiCall('write', flat);
-    if (res.success) {
-      showToast(res.message||'已儲存', 'success');
-    } else {
-      showToast('儲存失敗：'+(res.error||''), 'error');
-    }
-  } catch(e) { showToast('儲存失敗：'+e.message, 'error'); }
+    const res = await jsonpCall({ action:'write', data: JSON.stringify(flat) });
+    if (res.success) showToast(res.message||'已儲存','success');
+    else showToast('儲存失敗：'+(res.error||''),'error');
+  } catch(e) { showToast('儲存失敗：'+e.message,'error'); }
   hideLoading();
 }
 
-// ─── Delete from Sheets ───
 async function deleteFromSheets(id) {
   showLoading('刪除中...');
   try {
-    const res = await apiCall('delete', {id});
-    if (res.success) showToast('已刪除', 'success');
-    else showToast('刪除失敗：'+(res.error||''), 'error');
-  } catch(e) { showToast('刪除失敗：'+e.message, 'error'); }
+    const res = await jsonpCall({ action:'delete', id: id });
+    if (res.success) showToast('已刪除','success');
+    else showToast('刪除失敗：'+(res.error||''),'error');
+  } catch(e) { showToast('刪除失敗：'+e.message,'error'); }
   hideLoading();
 }
 
@@ -193,14 +190,8 @@ async function deleteCampaign(id) {
 
 // ─── Dialog ───
 function openDialog(editId) {
-  if (editId) {
-    dialogForm = JSON.parse(JSON.stringify(campaigns.find(x=>x.id===editId)));
-  } else {
-    dialogForm = {
-      id:'', name:'', contact:'', window:'', note:'',
-      milestones: MS_DEFS.map(m=>({key:m.key,label:m.label,date:''}))
-    };
-  }
+  if (editId) dialogForm = JSON.parse(JSON.stringify(campaigns.find(x=>x.id===editId)));
+  else dialogForm = { id:'', name:'', contact:'', window:'', note:'', milestones: MS_DEFS.map(m=>({key:m.key,label:m.label,date:''})) };
   openPI=-1; renderDialog();
 }
 function closeDialog() { dialogForm=null; openPI=-1; document.getElementById('modal').innerHTML=''; }
@@ -238,58 +229,49 @@ function renderDialog(){
   if(!dialogForm)return;
   const isEdit=!!campaigns.find(x=>x.id===dialogForm.id);
   const fc=dialogForm.milestones.filter(m=>m.date).length;
-
   const msH=dialogForm.milestones.map((ms,i)=>{
-    const def=MS_DEFS[i];
-    let pkH='';
+    const def=MS_DEFS[i];let pkH='';
     if(openPI===i){
-      const dim=dimM(pY,pM),first=fowM(pY,pM);
-      let cells=[];
+      const dim=dimM(pY,pM),first=fowM(pY,pM);let cells=[];
       for(let x=0;x<first;x++)cells.push('<button class="dp-d" disabled></button>');
       for(let d=1;d<=dim;d++){
         const ds=toDS(pY,pM,d),sel=ms.date===ds;
         const td=new Date(),isT=pY===td.getFullYear()&&pM===td.getMonth()+1&&d===td.getDate();
-        const we=isWE(ds);
-        let cls='dp-d';if(sel)cls+=' sel';else if(isT)cls+=' tod';if(we&&!sel)cls+=' we';
+        const we=isWE(ds);let cls='dp-d';if(sel)cls+=' sel';else if(isT)cls+=' tod';if(we&&!sel)cls+=' we';
         cells.push(`<button class="${cls}" onclick="pSelD(${d})">${d}</button>`);
       }
       while(cells.length%7)cells.push('<button class="dp-d" disabled></button>');
       let wkH='';for(let r=0;r<cells.length;r+=7)wkH+=`<div class="dp-wk">${cells.slice(r,r+7).join('')}</div>`;
       const yO=Array.from({length:10},(_,i)=>new Date().getFullYear()-2+i).map(y=>`<option value="${y}"${y===pY?' selected':''}>${y}</option>`).join('');
       const mO=Array.from({length:12},(_,i)=>i+1).map(m=>`<option value="${m}"${m===pM?' selected':''}>${m}月</option>`).join('');
-      pkH=`<div class="dp-dd"><div class="dp-nav"><button onclick="pPrev()">◀</button><div style="display:flex;gap:6px"><select onchange="pY=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${yO}</select><select onchange="pM=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${mO}</select></div><button onclick="pNext()">▶</button></div><div class="dp-wk">${['日','一','二','三','四','五','六'].map((w,wi)=>`<div style="font-size:11px;color:${wi===0||wi===6?'#e94560':'#555'};padding:4px">${w}</div>`).join('')}</div>${wkH}<div style="display:flex;gap:6px;margin-top:8px"><button class="qb" onclick="pToday()">今天</button><button class="qb" onclick="pClear()" style="color:#e94560">清除</button></div><div style="font-size:10px;color:#444;margin-top:6px"><span style="color:#e9456088;text-decoration:line-through">假日</span> 不計入工作天</div></div>`;
+      pkH=`<div class="dp-dd"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><button onclick="pPrev()" style="background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:4px 8px">◀</button><div style="display:flex;gap:6px"><select onchange="pY=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${yO}</select><select onchange="pM=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${mO}</select></div><button onclick="pNext()" style="background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:4px 8px">▶</button></div><div class="dp-wk">${['日','一','二','三','四','五','六'].map((w,wi)=>`<div style="font-size:11px;color:${wi===0||wi===6?'#e94560':'#555'};padding:4px">${w}</div>`).join('')}</div>${wkH}<div style="display:flex;gap:6px;margin-top:8px"><button class="qb" onclick="pToday()">今天</button><button class="qb" onclick="pClear()" style="color:#e94560">清除</button></div><div style="font-size:10px;color:#444;margin-top:6px"><span style="color:#e9456088;text-decoration:line-through">假日</span> 不計入工作天</div></div>`;
     }
-    return `<div style="display:flex;align-items:flex-start;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${def.color};flex-shrink:0;margin-top:12px"></div><div style="width:90px;flex-shrink:0;margin-top:8px"><div style="font-size:13px;color:#ccc">${ms.label}</div>${def.biz>0?`<div style="font-size:10px;color:#444">+${def.biz}工作天</div>`:''}</div><div style="flex:1;position:relative"><button class="dp-tr" onclick="togglePicker(${i})" style="color:${ms.date?'#fff':'#555'}"><span>${ms.date?fCN(ms.date):'點選選擇日期'}</span><span style="color:#555;font-size:16px">📅</span></button>${pkH}</div></div>`;
+    return`<div style="display:flex;align-items:flex-start;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${def.color};flex-shrink:0;margin-top:12px"></div><div style="width:90px;flex-shrink:0;margin-top:8px"><div style="font-size:13px;color:#ccc">${ms.label}</div>${def.biz>0?`<div style="font-size:10px;color:#444">+${def.biz}工作天</div>`:''}</div><div style="flex:1;position:relative"><button class="dp-tr" onclick="togglePicker(${i})" style="color:${ms.date?'#fff':'#555'}"><span>${ms.date?fCN(ms.date):'點選選擇日期'}</span><span style="color:#555;font-size:16px">📅</span></button>${pkH}</div></div>`;
   }).join('');
-
   document.getElementById('modal').innerHTML=`<div class="mo" onclick="if(event.target===this)closeDialog()"><div class="mb"><h3>${isEdit?'編輯檔期':'新增檔期'}</h3><label class="lbl">聯絡人<input class="inp" value="${dialogForm.contact}" oninput="dialogForm.contact=this.value" placeholder="例：Yun 分機 6997"></label><label class="lbl">檔期名稱<input class="inp" value="${dialogForm.name}" oninput="dialogForm.name=this.value" placeholder="例：Training power"></label><label class="lbl">項目執行窗口<input class="inp" value="${dialogForm.window}" oninput="dialogForm.window=this.value" placeholder="選填"></label><div style="margin-top:12px;padding:12px 14px;background:#0d0d0d;border-radius:10px;border:1px solid #222"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:14px;color:#fff;font-weight:700">📅 里程碑日期</div><button class="btn sm" onclick="autoFill()" ${fc===0?'disabled':''} style="${fc>0?'':'background:#333'}">⚡ 自動推算</button></div><div style="font-size:11px;color:#666;line-height:1.6;padding:8px 10px;background:#111;border-radius:8px;margin-bottom:10px">💡 填<strong style="color:#e94560">任一個</strong>日期 → 按「自動推算」→ 全部算出（跳過六日）</div>${msH}</div><label class="lbl" style="margin-top:12px">備註<input class="inp" value="${dialogForm.note||''}" oninput="dialogForm.note=this.value" placeholder="選填"></label><div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end"><button class="btn sec" onclick="closeDialog()">取消</button><button class="btn" onclick="saveCampaign()">${isEdit?'儲存':'新增'}</button></div></div></div>`;
 }
-
 document.addEventListener('click',e=>{if(openPI>=0&&!e.target.closest('.dp-dd')&&!e.target.closest('.dp-tr')){openPI=-1;if(dialogForm)renderDialog()}});
 
 // ─── Gantt ───
 function renderGantt(){
   const ad=campaigns.flatMap(c=>c.milestones.map(m=>m.date).filter(Boolean));
-  if(!ad.length)return'';
-  ad.sort();
+  if(!ad.length)return'';ad.sort();
   const ea=addD(ad[0],-3),la=addD(ad[ad.length-1],3),sp=diffD(ea,la);
   if(sp<=0)return'';
-  const step=Math.max(1,Math.floor(sp/16));
-  let mkH='',weH='';
-  for(let i=0;i<=sp;i+=step){const d=addD(ea,i),p=(i/sp)*100;const c=isWE(d)?'#e9456066':'#444';mkH+=`<div style="position:absolute;left:${p}%;bottom:4px;font-size:10px;color:${c};transform:translateX(-50%);white-space:nowrap">${fSh(d)}<span style="display:block;text-align:center;font-size:9px;color:${isWE(d)?'#e9456044':'#333'}">(${gWD(d)})</span></div>`}
-  for(let i=0;i<=sp;i++){const d=addD(ea,i);if(isWE(d))weH+=`<div style="position:absolute;left:${(i/sp)*100}%;width:${(1/sp)*100}%;top:0;bottom:0;background:rgba(233,69,96,.06)"></div>`}
+  const step=Math.max(1,Math.floor(sp/16));let mkH='',weH='';
+  for(let i=0;i<=sp;i+=step){const d=addD(ea,i),p=(i/sp)*100;mkH+=`<div style="position:absolute;left:${p}%;bottom:4px;font-size:10px;color:${isWE(d)?'#e9456066':'#444'};transform:translateX(-50%);white-space:nowrap">${fSh(d)}<span style="display:block;text-align:center;font-size:9px;color:${isWE(d)?'#e9456044':'#333'}">(${gWD(d)})</span></div>`}
+  for(let i=0;i<=sp;i++){if(isWE(addD(ea,i)))weH+=`<div style="position:absolute;left:${(i/sp)*100}%;width:${(1/sp)*100}%;top:0;bottom:0;background:rgba(233,69,96,.06)"></div>`}
   const td=new Date().toISOString().split('T')[0],tp=(diffD(ea,td)/sp)*100;
   const tdH=tp>=0&&tp<=100?`<div style="position:absolute;left:${tp}%;top:0;bottom:0;width:2px;background:#e94560;z-index:5"><div style="position:absolute;top:2px;left:-10px;font-size:9px;color:#e94560;font-weight:700">今日</div></div>`:'';
   let rowH='';
   campaigns.forEach(c=>{
     const ds=c.milestones.map(m=>m.date).filter(Boolean);if(!ds.length)return;
     let bH=weH;
-    c.milestones.forEach((ms,i)=>{if(!ms.date)return;const nx=c.milestones.slice(i+1).find(m=>m.date);if(!nx)return;const l=(diffD(ea,ms.date)/sp)*100,w=(diffD(ms.date,nx.date)/sp)*100;const ph=MS_DEFS[i]?.phase||1;const br=i===0?'5px 0 0 5px':(!c.milestones.slice(i+2).find(m=>m.date)?'0 5px 5px 0':'0');bH+=`<div title="${ms.label}→${nx.label}：${diffD(ms.date,nx.date)}天" style="position:absolute;left:${l}%;width:${Math.max(w,.3)}%;top:10px;bottom:10px;background:${PH_BG[ph]||'#333'};border-radius:${br};box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`});
+    c.milestones.forEach((ms,i)=>{if(!ms.date)return;const nx=c.milestones.slice(i+1).find(m=>m.date);if(!nx)return;const l=(diffD(ea,ms.date)/sp)*100,w=(diffD(ms.date,nx.date)/sp)*100;const ph=MS_DEFS[i]?.phase||1;const br=i===0?'5px 0 0 5px':(!c.milestones.slice(i+2).find(m=>m.date)?'0 5px 5px 0':'0');bH+=`<div title="${ms.label}→${nx.label}：${diffD(ms.date,nx.date)}天" style="position:absolute;left:${l}%;width:${Math.max(w,.3)}%;top:10px;bottom:10px;background:${PH_BG[ph]};border-radius:${br};box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`});
     c.milestones.forEach((ms,i)=>{if(!ms.date)return;const l=(diffD(ea,ms.date)/sp)*100;bH+=`<div title="${ms.label}：${fCN(ms.date)}" style="position:absolute;left:${l}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;z-index:3;background:${MS_DEFS[i]?.color||'#888'};border:2px solid #111"></div>`});
     rowH+=`<div style="display:flex;border-bottom:1px solid #1a1a1a;min-height:52px"><div style="width:180px;min-width:180px;padding:8px 12px;border-right:1px solid #222;flex-shrink:0;display:flex;flex-direction:column;justify-content:center"><div style="font-weight:700;font-size:13px;color:#fff">${c.name}</div><div style="font-size:10px;color:#555;margin-top:2px">${c.contact}</div></div><div style="flex:1;position:relative;padding:6px 0">${bH}</div></div>`;
   });
-  const lgH=MS_DEFS.map(m=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#666"><div style="width:8px;height:8px;border-radius:50%;background:${m.color}"></div>${m.label}</div>`).join('')+`<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e94560"><div style="width:10px;height:2px;background:#e94560"></div>今日</div><div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e9456044"><div style="width:10px;height:10px;background:rgba(233,69,96,.1);border-radius:2px"></div>假日</div>`;
-  return`<div style="background:#111;border-radius:12px;border:1px solid #222;overflow:hidden;margin-bottom:24px"><div style="display:flex;border-bottom:1px solid #333"><div style="width:180px;min-width:180px;padding:10px 12px;font-size:12px;color:#555;border-right:1px solid #222;flex-shrink:0">檔期 (${campaigns.length})</div><div style="flex:1;position:relative;height:44px;overflow:hidden">${weH}${mkH}${tdH}</div></div>${rowH}<div style="display:flex;gap:14px;padding:10px 12px;border-top:1px solid #222;flex-wrap:wrap">${lgH}</div></div>`;
+  return`<div style="background:#111;border-radius:12px;border:1px solid #222;overflow:hidden;margin-bottom:24px"><div style="display:flex;border-bottom:1px solid #333"><div style="width:180px;min-width:180px;padding:10px 12px;font-size:12px;color:#555;border-right:1px solid #222">檔期 (${campaigns.length})</div><div style="flex:1;position:relative;height:44px;overflow:hidden">${weH}${mkH}${tdH}</div></div>${rowH}<div style="display:flex;gap:14px;padding:10px 12px;border-top:1px solid #222;flex-wrap:wrap">${MS_DEFS.map(m=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#666"><div style="width:8px;height:8px;border-radius:50%;background:${m.color}"></div>${m.label}</div>`).join('')}<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e94560"><div style="width:10px;height:2px;background:#e94560"></div>今日</div><div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e9456044"><div style="width:10px;height:10px;background:rgba(233,69,96,.1);border-radius:2px"></div>假日</div></div></div>`;
 }
 
 // ─── Card ───
@@ -304,47 +286,37 @@ function renderCard(c){
   return`<div class="card"><div style="position:absolute;top:12px;right:12px;display:flex;gap:4px"><button class="btn-t" onclick="openDialog('${c.id}')">✎</button><button class="btn-t" style="color:#e94560" onclick="deleteCampaign('${c.id}')">✕</button></div><div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;padding-right:50px">${c.name}</div><div style="font-size:11px;color:#555;margin-bottom:12px">${c.contact}${c.window?' ｜ '+c.window:''}</div>${msH}${totH}</div>`;
 }
 
-// ─── Overview ───
-function renderOverview(){
-  const phs=[{n:'01',nm:'設計發包',d:'10工作天',a:'#e94560',dk:'#1a1a2e'},{n:'02',nm:'生產',d:'8工作天',a:'#0f3460',dk:'#16213e'},{n:'03',nm:'寄貨',d:'3工作天',a:'#533483',dk:'#1a1a2e'},{n:'04',nm:'施工',d:'3工作天+一晚',a:'#8e44ad',dk:'#0f3460'}];
-  return`<div style="padding:16px;background:#111;border-radius:12px;margin-bottom:20px;border:1px solid #222"><div style="font-size:12px;color:#555;margin-bottom:10px;letter-spacing:2px">ADIDAS TAIWAN 大型檔期標準流程（工作天計算，跳過六日）</div><div style="display:flex;gap:0;align-items:stretch">${phs.map((p,i)=>`<div style="flex:1;position:relative"><div style="background:linear-gradient(135deg,${p.a},${p.dk});border-radius:${i===0?'8px 0 0 8px':i===3?'0 8px 8px 0':'0'};padding:10px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;${i<3?'border-right:2px solid #0a0a0a':''}"><div style="font-size:10px;color:rgba(255,255,255,.5)">${p.n}</div><div style="font-size:14px;font-weight:700;color:#fff">${p.nm}</div><div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:2px">${p.d}</div></div>${i<3?'<div style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);color:#e94560;font-size:14px;z-index:2">▸</div>':''}</div>`).join('')}</div><div style="text-align:right;font-size:13px;color:#e94560;font-weight:700;margin-top:8px">總工期：24 工作天 + 一晚</div></div>`;
-}
-
-// ─── Main Render ───
+// ─── Main ───
 function render(){
   document.getElementById('app').innerHTML=`
     <div id="toast" class="toast"></div>
     <div id="loading" class="loading-overlay" style="display:none"><div class="loading-box"><div class="spinner"></div><div class="msg">處理中...</div></div></div>
-
     <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
         <h1 style="font-size:26px;font-weight:800;background:linear-gradient(135deg,#e94560,#533483);-webkit-background-clip:text;-webkit-text-fill-color:transparent">大型檔期行程管理</h1>
         <div style="font-size:11px;color:#444;margin-top:2px;letter-spacing:2px">ADIDAS TAIWAN — CAMPAIGN SCHEDULE MANAGER</div>
       </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn" onclick="openDialog()">＋ 新增檔期</button>
+      <div style="display:flex;gap:8px"><button class="btn" onclick="openDialog()">＋ 新增檔期</button></div>
+    </div>
+    <div style="padding:16px;background:#111;border-radius:12px;margin-bottom:20px;border:1px solid #222">
+      <div style="font-size:12px;color:#555;margin-bottom:10px;letter-spacing:2px">ADIDAS TAIWAN 大型檔期標準流程（工作天計算，跳過六日）</div>
+      <div style="display:flex;gap:0;align-items:stretch">
+        ${[{n:'01',nm:'設計發包',d:'10工作天',a:'#e94560',dk:'#1a1a2e'},{n:'02',nm:'生產',d:'8工作天',a:'#0f3460',dk:'#16213e'},{n:'03',nm:'寄貨',d:'3工作天',a:'#533483',dk:'#1a1a2e'},{n:'04',nm:'施工',d:'3工作天+一晚',a:'#8e44ad',dk:'#0f3460'}].map((p,i)=>`<div style="flex:1;position:relative"><div style="background:linear-gradient(135deg,${p.a},${p.dk});border-radius:${i===0?'8px 0 0 8px':i===3?'0 8px 8px 0':'0'};padding:10px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;${i<3?'border-right:2px solid #0a0a0a':''}"><div style="font-size:10px;color:rgba(255,255,255,.5)">${p.n}</div><div style="font-size:14px;font-weight:700;color:#fff">${p.nm}</div><div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:2px">${p.d}</div></div>${i<3?'<div style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);color:#e94560;font-size:14px;z-index:2">▸</div>':''}</div>`).join('')}
       </div>
+      <div style="text-align:right;font-size:13px;color:#e94560;font-weight:700;margin-top:8px">總工期：24 工作天 + 一晚</div>
     </div>
-
-    ${renderOverview()}
-
-    <div class="sync-bar">
-      <button class="btn sync" onclick="syncRead()" ${syncing?'disabled':''}>${syncing?'同步中...':'↻ 從 Google Sheets 同步'}</button>
-      ${lastSync?`<span class="status">上次同步：${lastSync}</span>`:'<span class="status">點選同步載入試算表資料</span>'}
-      <a href="https://docs.google.com/spreadsheets/d/1s9w-Eop2gUZwfhl7lT_BDffPjom7xY4uvsPZ0Q-qWLw/edit" target="_blank" style="font-size:12px;color:#e94560;text-decoration:none">↗ 開啟試算表</a>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn sync" onclick="syncRead()">↻ 從 Google Sheets 同步</button>
+      ${lastSync?`<span style="font-size:11px;color:#555">上次同步：${lastSync}</span>`:'<span style="font-size:11px;color:#555">點選同步載入資料</span>'}
+      <a href="${SHEET_URL}" target="_blank" style="font-size:12px;color:#e94560;text-decoration:none">↗ 開啟試算表</a>
     </div>
-
     ${renderGantt()}
-
-    ${campaigns.length?`<div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">${campaigns.map(renderCard).join('')}</div>`:`<div style="text-align:center;padding:50px 20px;color:#333"><div style="font-size:48px;margin-bottom:12px">📋</div><div style="font-size:15px;color:#555">尚無檔期資料</div><div style="font-size:12px;margin-top:4px">按「同步」載入現有資料，或「新增檔期」建立新的</div></div>`}
-
+    ${campaigns.length?`<div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">${campaigns.map(renderCard).join('')}</div>`:`<div style="text-align:center;padding:50px 20px"><div style="font-size:48px;margin-bottom:12px">📋</div><div style="font-size:15px;color:#555">尚無檔期資料</div><div style="font-size:12px;color:#333;margin-top:4px">按「同步」載入現有資料，或「新增檔期」建立新的</div></div>`}
     <div id="modal"></div>
   `;
 }
 
-// ─── Init ───
 render();
-// 自動載入
 syncRead();
 </script>
 </body>
