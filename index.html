@@ -5,142 +5,48 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>大型檔期行程管理 — adidas Taiwan</title>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;800&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Noto Sans TC', -apple-system, sans-serif;
-    background: #0a0a0a; color: #eee;
-    min-height: 100vh;
-  }
-  input:focus, select:focus { outline: none; border-color: #e94560 !important; }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: #111; }
-  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
-
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
-
-  /* 標題 */
-  .header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
-  .header h1 { font-size: 26px; font-weight: 800; background: linear-gradient(135deg, #e94560, #533483); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  .header .sub { font-size: 11px; color: #444; margin-top: 2px; letter-spacing: 2px; }
-
-  /* 按鈕 */
-  .btn { padding: 8px 16px; border-radius: 8px; border: none; background: #e94560; color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity .2s; }
-  .btn:hover { opacity: .85; }
-  .btn.secondary { background: #333; }
-  .btn.sync { background: #0f3460; }
-  .btn.small { padding: 5px 14px; font-size: 12px; }
-  .btn:disabled { opacity: .4; cursor: default; }
-  .btn-tiny { background: none; border: none; color: #555; cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px; }
-  .btn-tiny:hover { color: #fff; }
-
-  /* 輸入 */
-  .input { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #eee; font-size: 13px; margin-top: 4px; font-family: inherit; }
-  .label { display: block; font-size: 13px; color: #aaa; margin-bottom: 10px; }
-
-  /* 標準流程 */
-  .overview { padding: 16px; background: #111; border-radius: 12px; margin-bottom: 20px; border: 1px solid #222; }
-  .overview .title { font-size: 12px; color: #555; margin-bottom: 10px; letter-spacing: 2px; }
-  .phases { display: flex; gap: 0; align-items: stretch; }
-  .phase { position: relative; display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; }
-  .phase .num { font-size: 10px; color: rgba(255,255,255,.5); }
-  .phase .name { font-size: 14px; font-weight: 700; color: #fff; }
-  .phase .days { font-size: 13px; color: rgba(255,255,255,.7); margin-top: 2px; }
-  .phase-arrow { position: absolute; right: -7px; top: 50%; transform: translateY(-50%); color: #e94560; font-size: 14px; z-index: 2; }
-  .overview .total { text-align: right; font-size: 13px; color: #e94560; font-weight: 700; margin-top: 8px; }
-
-  /* Sheets 設定 */
-  .sheets-config { margin-bottom: 20px; }
-  .sheets-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .sheets-panel { margin-top: 12px; padding: 16px; background: #111; border-radius: 12px; border: 1px solid #222; }
-  .sheets-panel .hint { font-size: 12px; color: #2ecc71; line-height: 1.7; margin-top: 8px; }
-  .sheets-link { font-size: 12px; color: #e94560; text-decoration: none; }
-  .sheets-link:hover { text-decoration: underline; }
-  .sync-time { font-size: 11px; color: #555; }
-
-  /* 甘特圖 */
-  .gantt { background: #111; border-radius: 12px; border: 1px solid #222; overflow: hidden; margin-bottom: 24px; }
-  .gantt-header { display: flex; border-bottom: 1px solid #333; }
-  .gantt-label-col { width: 180px; min-width: 180px; padding: 10px 12px; font-size: 12px; color: #555; border-right: 1px solid #222; flex-shrink: 0; }
-  .gantt-timeline { flex: 1; position: relative; height: 44px; overflow: hidden; }
-  .gantt-row { display: flex; border-bottom: 1px solid #1a1a1a; min-height: 52px; }
-  .gantt-row-label { width: 180px; min-width: 180px; padding: 8px 12px; border-right: 1px solid #222; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
-  .gantt-row-label .name { font-weight: 700; font-size: 13px; color: #fff; }
-  .gantt-row-label .contact { font-size: 10px; color: #555; margin-top: 2px; }
-  .gantt-row-bars { flex: 1; position: relative; padding: 6px 0; }
-  .gantt-legend { display: flex; gap: 14px; padding: 10px 12px; border-top: 1px solid #222; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #666; }
-
-  /* 卡片 */
-  .cards { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
-  .card { background: #111; border-radius: 12px; border: 1px solid #222; padding: 16px; position: relative; }
-  .card .title { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 2px; padding-right: 50px; }
-  .card .meta { font-size: 11px; color: #555; margin-bottom: 12px; }
-  .card .ms-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 12px; }
-  .card .ms-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .card .ms-label { width: 85px; color: #888; flex-shrink: 0; }
-  .card .total-line { border-top: 1px solid #222; margin-top: 8px; padding-top: 8px; font-size: 12px; color: #e94560; font-weight: 600; }
-  .card-actions { position: absolute; top: 12px; right: 12px; display: flex; gap: 4px; }
-
-  /* 空狀態 */
-  .empty { text-align: center; padding: 50px 20px; color: #333; }
-  .empty .icon { font-size: 48px; margin-bottom: 12px; }
-  .empty .text { font-size: 15px; color: #555; }
-  .empty .hint { font-size: 12px; margin-top: 4px; }
-
-  /* Toast */
-  .toast { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 10px; color: #fff; font-size: 13px; font-weight: 600; z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,.5); animation: fadeIn .3s ease; }
-  .toast.error { background: #e94560; }
-  .toast.success { background: #2ecc71; }
-  .toast.info { background: #333; }
-  .toast.hiding { animation: fadeOut .3s ease forwards; }
-
-  /* Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
-  .modal-box { background: #1a1a1a; border-radius: 14px; padding: 24px; width: 100%; max-width: 540px; max-height: 90vh; overflow-y: auto; border: 1px solid #333; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
-  .modal-box h3 { margin: 0 0 16px; color: #e94560; font-size: 18px; }
-  .modal-footer { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
-
-  /* 里程碑區塊 */
-  .ms-block { margin-top: 12px; margin-bottom: 6px; padding: 12px 14px; background: #0d0d0d; border-radius: 10px; border: 1px solid #222; }
-  .ms-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .ms-block-title { font-size: 14px; color: #fff; font-weight: 700; }
-  .ms-hint { font-size: 11px; color: #666; line-height: 1.6; padding: 8px 10px; background: #111; border-radius: 8px; margin-bottom: 10px; }
-  .ms-hint strong { color: #e94560; }
-  .ms-item { display: flex; align-items: flex-start; gap: 8px; }
-  .ms-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 12px; }
-  .ms-item .info { width: 90px; flex-shrink: 0; margin-top: 8px; }
-  .ms-item .info .name { font-size: 13px; color: #ccc; }
-  .ms-item .info .biz { font-size: 10px; color: #444; }
-  .ms-item .picker { flex: 1; }
-
-  /* DatePicker */
-  .dp-trigger { width: 100%; padding: 9px 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; font-size: 13px; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-family: inherit; margin-bottom: 6px; }
-  .dp-trigger .val { color: #fff; }
-  .dp-trigger .placeholder { color: #555; }
-  .dp-trigger .icon { color: #555; font-size: 16px; }
-  .dp-dropdown { position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 200; background: #1a1a1a; border: 1px solid #444; border-radius: 12px; padding: 14px; width: 290px; box-shadow: 0 16px 48px rgba(0,0,0,.7); }
-  .dp-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .dp-nav button { background: none; border: none; color: #888; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-  .dp-nav select { padding: 4px 8px; border-radius: 6px; border: 1px solid #333; background: #111; color: #ccc; font-size: 13px; cursor: pointer; font-family: inherit; }
-  .dp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; margin-bottom: 4px; }
-  .dp-weekdays div { font-size: 11px; color: #555; padding: 4px; }
-  .dp-weekdays .weekend { color: #e94560; }
-  .dp-week { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
-  .dp-day { padding: 6px; margin: 1px; border-radius: 6px; border: none; font-size: 13px; cursor: pointer; font-family: inherit; background: transparent; color: #ccc; }
-  .dp-day:disabled { color: transparent; cursor: default; }
-  .dp-day.selected { background: #e94560; color: #fff; font-weight: 700; }
-  .dp-day.today { background: #333; font-weight: 700; }
-  .dp-day.weekend { color: #e9456088; text-decoration: line-through; }
-  .dp-day.weekend.selected { color: #fff; text-decoration: none; }
-  .dp-footer { display: flex; gap: 6px; margin-top: 8px; }
-  .dp-footer button { padding: 4px 12px; border-radius: 6px; border: 1px solid #333; background: #111; color: #ccc; font-size: 12px; cursor: pointer; font-family: inherit; }
-  .dp-hint { font-size: 10px; color: #444; margin-top: 6px; }
-  .dp-hint .weekend-demo { color: #e9456088; text-decoration: line-through; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:#0a0a0a;color:#eee;min-height:100vh}
+  input:focus,select:focus{outline:none;border-color:#e94560!important}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#111}
+  ::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+  .container{max-width:1200px;margin:0 auto;padding:24px 20px}
+  .btn{padding:8px 16px;border-radius:8px;border:none;background:#e94560;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:opacity .2s}
+  .btn:hover{opacity:.85}.btn:disabled{opacity:.4;cursor:default}
+  .btn.sec{background:#333}.btn.sync{background:#0f3460}.btn.sm{padding:5px 14px;font-size:12px}
+  .btn-t{background:none;border:none;color:#555;cursor:pointer;font-size:14px;padding:2px 6px;border-radius:4px;font-family:inherit}
+  .btn-t:hover{color:#fff}
+  .inp{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;color:#eee;font-size:13px;margin-top:4px;font-family:inherit}
+  .lbl{display:block;font-size:13px;color:#aaa;margin-bottom:10px}
+  .toast{position:fixed;top:20px;right:20px;padding:10px 20px;border-radius:10px;color:#fff;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.5);animation:fadeIn .3s ease;display:none}
+  .toast.err{background:#e94560}.toast.ok{background:#2ecc71}.toast.info{background:#333}
+  .mo{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .mb{background:#1a1a1a;border-radius:14px;padding:24px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;border:1px solid #333;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .mb h3{margin:0 0 16px;color:#e94560;font-size:18px}
+  .dp-tr{width:100%;padding:9px 12px;border-radius:8px;border:1px solid #333;background:#1a1a1a;font-size:13px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-family:inherit;margin-bottom:6px;color:#fff}
+  .dp-dd{position:absolute;top:100%;left:0;margin-top:4px;z-index:200;background:#1a1a1a;border:1px solid #444;border-radius:12px;padding:14px;width:290px;box-shadow:0 16px 48px rgba(0,0,0,.7)}
+  .dp-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .dp-nav button{background:none;border:none;color:#888;font-size:16px;cursor:pointer;padding:4px 8px}
+  .dp-nav select{padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px;cursor:pointer;font-family:inherit}
+  .dp-wk{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+  .dp-d{padding:6px;margin:1px;border-radius:6px;border:none;font-size:13px;cursor:pointer;font-family:inherit;background:transparent;color:#ccc}
+  .dp-d:disabled{color:transparent;cursor:default}
+  .dp-d.sel{background:#e94560;color:#fff;font-weight:700}
+  .dp-d.tod{background:#333;font-weight:700}
+  .dp-d.we{color:#e9456088;text-decoration:line-through}
+  .dp-d.we.sel{color:#fff;text-decoration:none}
+  .qb{padding:4px 12px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:12px;cursor:pointer;font-family:inherit}
+  .card{background:#111;border-radius:12px;border:1px solid #222;padding:16px;position:relative}
+  .sync-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+  .sync-bar .status{font-size:11px;color:#555}
+  .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2000}
+  .loading-box{background:#1a1a1a;border-radius:12px;padding:24px 40px;text-align:center;border:1px solid #333}
+  .loading-box .spinner{width:32px;height:32px;border:3px solid #333;border-top-color:#e94560;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 </head>
 <body>
@@ -148,508 +54,298 @@
 <div class="container" id="app"></div>
 
 <script>
-// ─── 資料定義 ───
-const MILESTONE_DEFS = [
-  { key: "layout", label: "平配圖", color: "#e94560", phase: 1, businessDays: 0 },
-  { key: "design", label: "圖檔做稿", color: "#c23152", phase: 1, businessDays: 0 },
-  { key: "production", label: "發包", color: "#0f3460", phase: 2, businessDays: 10 },
-  { key: "shipping", label: "寄貨", color: "#533483", phase: 3, businessDays: 8 },
-  { key: "install", label: "閉店後施工", color: "#8e44ad", phase: 4, businessDays: 3 },
-  { key: "complete", label: "施工完成", color: "#2ecc71", phase: 4, businessDays: 3 },
+// ─── CONFIG ───
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybBxn5erNpEN23ysAUywqHDgDzMveDt4YR8tFVD03II2Ve1TMoAQuwbpMdYzsMDim-/exec';
+
+const MS_DEFS = [
+  {key:'layout',label:'平配圖',color:'#e94560',phase:1,biz:0},
+  {key:'design',label:'圖檔做稿',color:'#c23152',phase:1,biz:0},
+  {key:'production',label:'發包',color:'#0f3460',phase:2,biz:10},
+  {key:'shipping',label:'寄貨',color:'#533483',phase:3,biz:8},
+  {key:'install',label:'閉店後施工',color:'#8e44ad',phase:4,biz:3},
+  {key:'complete',label:'施工完成',color:'#2ecc71',phase:4,biz:3},
 ];
-const CUMULATIVE_BIZ_DAYS = [0, 0, 10, 18, 21, 24];
-const PHASE_BG = {
-  1: "linear-gradient(135deg, #e94560, #1a1a2e)",
-  2: "linear-gradient(135deg, #0f3460, #16213e)",
-  3: "linear-gradient(135deg, #533483, #1a1a2e)",
-  4: "linear-gradient(135deg, #8e44ad, #2ecc71)",
-};
+const CUM_BIZ = [0,0,10,18,21,24];
+const PH_BG = {1:'linear-gradient(135deg,#e94560,#1a1a2e)',2:'linear-gradient(135deg,#0f3460,#16213e)',3:'linear-gradient(135deg,#533483,#1a1a2e)',4:'linear-gradient(135deg,#8e44ad,#2ecc71)'};
 
-// ─── 日期工具 ───
-const toDS = (y,m,d) => `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-const addD = (s,n) => { const d=new Date(s); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; };
-const diffD = (a,b) => Math.round((new Date(b)-new Date(a))/864e5);
-const isWE = s => { const d=new Date(s).getDay(); return d===0||d===6; };
-const addBD = (s,n) => { let c=s,a=0; while(a<n){c=addD(c,1); if(!isWE(c))a++;} return c; };
-const subBD = (s,n) => { let c=s,a=0; while(a<n){c=addD(c,-1); if(!isWE(c))a++;} return c; };
-const WD = ["日","一","二","三","四","五","六"];
-const fmtCN = s => { if(!s) return ""; const d=new Date(s); return `${d.getMonth()+1}月${d.getDate()}日 星期${WD[d.getDay()]}`; };
-const fmtShort = s => { if(!s) return ""; const d=new Date(s); return `${d.getMonth()+1}/${d.getDate()}`; };
-const getWD = s => WD[new Date(s).getDay()];
-const dimMonth = (y,m) => new Date(y,m,0).getDate();
-const fow = (y,m) => new Date(y,m-1,1).getDay();
-const parseCN = (s, yr=2026) => { if(!s) return null; const m=s.match(/(\d{1,2})月(\d{1,2})日/); if(m) return toDS(yr,+m[1],+m[2]); if(/^\d{4}-\d{2}-\d{2}$/.test(s.trim())) return s.trim(); return null; };
+// ─── Date utils ───
+const toDS=(y,m,d)=>`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+const addD=(s,n)=>{const d=new Date(s);d.setDate(d.getDate()+n);return d.toISOString().split('T')[0]};
+const diffD=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const isWE=s=>{const d=new Date(s).getDay();return d===0||d===6};
+const addBD=(s,n)=>{let c=s,a=0;while(a<n){c=addD(c,1);if(!isWE(c))a++}return c};
+const subBD=(s,n)=>{let c=s,a=0;while(a<n){c=addD(c,-1);if(!isWE(c))a++}return c};
+const WD=['日','一','二','三','四','五','六'];
+const fCN=s=>{if(!s)return'';const d=new Date(s);return`${d.getMonth()+1}月${d.getDate()}日 星期${WD[d.getDay()]}`};
+const fSh=s=>{if(!s)return'';const d=new Date(s);return`${d.getMonth()+1}/${d.getDate()}`};
+const gWD=s=>WD[new Date(s).getDay()];
+const dimM=(y,m)=>new Date(y,m,0).getDate();
+const fowM=(y,m)=>new Date(y,m-1,1).getDay();
 
-// ─── CSV 解析 ───
-function parseCSV(text) {
-  return text.split('\n').map(line => {
-    const r=[]; let cur='', inQ=false;
-    for(let i=0;i<line.length;i++){
-      const c=line[i];
-      if(inQ){ if(c==='"'&&line[i+1]==='"'){cur+='"';i++;} else if(c==='"')inQ=false; else cur+=c; }
-      else { if(c==='"')inQ=true; else if(c===','){r.push(cur.trim());cur='';} else cur+=c; }
-    }
-    r.push(cur.trim()); return r;
+// ─── State ───
+let campaigns=[];
+let syncing=false, lastSync='', dialogForm=null, toastTimer=null, loading=false;
+let openPI=-1, pY=new Date().getFullYear(), pM=new Date().getMonth()+1;
+
+// ─── API ───
+async function apiCall(action, data) {
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({action, data})
   });
+  return await res.json();
 }
 
-// ─── 狀態 ───
-let campaigns = JSON.parse(localStorage.getItem('cs_campaigns') || '[]');
-let config = JSON.parse(localStorage.getItem('cs_config') || '{}');
-if (!config.sheetId) config = { sheetId: '1s9w-Eop2gUZwfhl7lT_BDffPjom7xY4uvsPZ0Q-qWLw', defaultYear: 2026 };
-let syncing = false, lastSync = localStorage.getItem('cs_lastSync') || '', dialogData = null, toastTimer = null;
-let settingsOpen = false;
-
-function save() {
-  localStorage.setItem('cs_campaigns', JSON.stringify(campaigns));
-  localStorage.setItem('cs_config', JSON.stringify(config));
-  if (lastSync) localStorage.setItem('cs_lastSync', lastSync);
+function showLoading(msg) {
+  loading = msg || '處理中...';
+  const el = document.getElementById('loading');
+  if (el) { el.style.display = 'flex'; el.querySelector('.msg').textContent = loading; }
+}
+function hideLoading() {
+  loading = false;
+  const el = document.getElementById('loading');
+  if (el) el.style.display = 'none';
 }
 
-// ─── Toast ───
-function showToast(msg, type='info') {
+function showToast(msg,type='info') {
   clearTimeout(toastTimer);
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `toast ${type}`;
-  el.style.display = 'block';
-  toastTimer = setTimeout(() => { el.style.display = 'none'; }, 3000);
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.className=`toast ${type==='error'?'err':type==='success'?'ok':'info'}`;
+  el.style.display='block';
+  toastTimer=setTimeout(()=>{el.style.display='none'},3000);
 }
 
-// ─── Sheets 解析 ───
-function parseSheetRows(rows, yr) {
-  const result = []; let cur = null;
-  for (const row of rows) {
-    const [A,B,C,D,E] = [0,1,2,3,4].map(i => (row[i]||'').trim());
-    if (A && B) {
-      if (cur) result.push(cur);
-      cur = { id: `s${result.length}-${Date.now()}`, contact: A, name: B, window: C, milestones: [], note: '' };
-      if (D && E) cur.milestones.push({ label: E, date: parseCN(D, yr) || '' });
-    } else if (cur && D && E) {
-      cur.milestones.push({ label: E, date: parseCN(D, yr) || '' });
-    } else if (!A && !B && !D && !E) {
-      if (cur) { result.push(cur); cur = null; }
-    }
-  }
-  if (cur) result.push(cur);
-  return result.map(c => {
-    const norm = MILESTONE_DEFS.map(def => {
-      const match = c.milestones.find(m => {
-        const l = m.label;
-        if (def.key==='layout' && (l.includes('平配')||l.includes('平面'))) return true;
-        if (def.key==='design' && (l.includes('做稿')||l.includes('圖檔'))) return true;
-        if (def.key==='production' && l.includes('發包')) return true;
-        if (def.key==='shipping' && l.includes('寄貨')) return true;
-        if (def.key==='install' && l.includes('施工') && !l.includes('完成')) return true;
-        if (def.key==='complete' && l.includes('完成')) return true;
-        return false;
-      });
-      return { key: def.key, label: match?.label || def.label, date: match?.date || '' };
-    });
-    return { ...c, milestones: norm };
-  });
-}
-
-// ─── 同步 ───
-async function syncSheets() {
-  if (!config.sheetId) { showToast('請填入試算表 ID','error'); return; }
-  syncing = true; render();
+// ─── Sync (Read) ───
+async function syncRead() {
+  showLoading('從 Google Sheets 讀取中...');
   try {
-    const url = `https://docs.google.com/spreadsheets/d/${config.sheetId}/export?format=csv&gid=0`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`HTTP ${res.status} — 請確認試算表已設為公開檢視`);
-    const text = await res.text();
-    const rows = parseCSV(text).slice(1);
-    const parsed = parseSheetRows(rows, config.defaultYear || 2026);
-    if (!parsed.length) { showToast('找不到有效的檔期資料','error'); }
-    else { campaigns = parsed; lastSync = new Date().toLocaleTimeString(); save(); showToast(`同步成功：${parsed.length} 個檔期`, 'success'); }
-  } catch(e) { showToast(`同步失敗：${e.message}`, 'error'); }
-  syncing = false; render();
+    const res = await apiCall('read');
+    if (res.success) {
+      campaigns = (res.campaigns||[]).map(c => ({
+        id: c.id,
+        contact: c.contact||'',
+        name: c.name||'',
+        window: c.window||'',
+        milestones: MS_DEFS.map(def => ({
+          key: def.key, label: def.label, date: c[def.key]||''
+        })),
+        note: ''
+      }));
+      lastSync = new Date().toLocaleTimeString();
+      showToast(`同步成功：${campaigns.length} 個檔期`, 'success');
+    } else {
+      showToast('同步失敗：'+(res.error||'未知錯誤'), 'error');
+    }
+  } catch(e) { showToast('同步失敗：'+e.message, 'error'); }
+  hideLoading(); render();
 }
 
-// ─── 匯出 CSV ───
-function exportCSV() {
-  const lines = ['聯絡人,檔期項目,項目執行窗口,日期,執行項目'];
-  campaigns.forEach(c => {
-    c.milestones.forEach((ms,i) => {
-      if (ms.date) lines.push([i===0?c.contact:'', i===0?c.name:'', i===0?c.window:'', fmtCN(ms.date), ms.label].join(','));
-    });
-    lines.push(',,,,');
-  });
-  const blob = new Blob(['\uFEFF'+lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'adidas_schedule.csv'; a.click();
-  showToast('CSV 已下載', 'success');
+// ─── Save to Sheets ───
+async function saveToSheets(c) {
+  showLoading('儲存到 Google Sheets...');
+  try {
+    const flat = {
+      id: c.id,
+      contact: c.contact,
+      name: c.name,
+      window: c.window||'',
+    };
+    c.milestones.forEach(ms => { flat[ms.key] = ms.date||''; });
+    const res = await apiCall('write', flat);
+    if (res.success) {
+      showToast(res.message||'已儲存', 'success');
+    } else {
+      showToast('儲存失敗：'+(res.error||''), 'error');
+    }
+  } catch(e) { showToast('儲存失敗：'+e.message, 'error'); }
+  hideLoading();
 }
 
-// ─── 刪除 ───
-function deleteCampaign(id) {
+// ─── Delete from Sheets ───
+async function deleteFromSheets(id) {
+  showLoading('刪除中...');
+  try {
+    const res = await apiCall('delete', {id});
+    if (res.success) showToast('已刪除', 'success');
+    else showToast('刪除失敗：'+(res.error||''), 'error');
+  } catch(e) { showToast('刪除失敗：'+e.message, 'error'); }
+  hideLoading();
+}
+
+// ─── CRUD ───
+async function saveCampaign() {
+  if (!dialogForm.name.trim()) { alert('請輸入檔期名稱'); return; }
+  if (!dialogForm.id) dialogForm.id = 'c'+Date.now();
+  const exists = campaigns.find(x=>x.id===dialogForm.id);
+  if (exists) campaigns = campaigns.map(x=>x.id===dialogForm.id?{...dialogForm}:x);
+  else campaigns.push({...dialogForm});
+  closeDialog(); render();
+  await saveToSheets(dialogForm);
+}
+
+async function deleteCampaign(id) {
   if (!confirm('確定刪除此檔期？')) return;
-  campaigns = campaigns.filter(c => c.id !== id);
-  save(); render(); showToast('已刪除');
+  campaigns = campaigns.filter(c=>c.id!==id);
+  render();
+  await deleteFromSheets(id);
 }
 
-// ─── 主渲染 ───
-function render() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <div id="toast" class="toast" style="display:none"></div>
+// ─── Dialog ───
+function openDialog(editId) {
+  if (editId) {
+    dialogForm = JSON.parse(JSON.stringify(campaigns.find(x=>x.id===editId)));
+  } else {
+    dialogForm = {
+      id:'', name:'', contact:'', window:'', note:'',
+      milestones: MS_DEFS.map(m=>({key:m.key,label:m.label,date:''}))
+    };
+  }
+  openPI=-1; renderDialog();
+}
+function closeDialog() { dialogForm=null; openPI=-1; document.getElementById('modal').innerHTML=''; }
 
-    <!-- 標題 -->
-    <div class="header">
+function autoFill() {
+  let ai=-1;
+  for(let i=0;i<dialogForm.milestones.length;i++){if(dialogForm.milestones[i].date){ai=i;break}}
+  if(ai===-1) for(let i=dialogForm.milestones.length-1;i>=0;i--){if(dialogForm.milestones[i].date){ai=i;break}}
+  if(ai===-1){alert('請先選擇任意一個里程碑的日期');return}
+  const ad=dialogForm.milestones[ai].date, ab=CUM_BIZ[ai];
+  for(let i=0;i<dialogForm.milestones.length;i++){
+    if(i===ai)continue;
+    const diff=CUM_BIZ[i]-ab;
+    dialogForm.milestones[i].date=diff>=0?addBD(ad,diff):subBD(ad,Math.abs(diff));
+  }
+  renderDialog();
+}
+
+function togglePicker(idx){
+  if(openPI===idx){openPI=-1}else{
+    openPI=idx;
+    const d=dialogForm.milestones[idx].date;
+    if(d){const dt=new Date(d);pY=dt.getFullYear();pM=dt.getMonth()+1}
+    else{pY=new Date().getFullYear();pM=new Date().getMonth()+1}
+  }
+  renderDialog();
+}
+function pPrev(){if(pM===1){pM=12;pY--}else pM--;renderDialog()}
+function pNext(){if(pM===12){pM=1;pY++}else pM++;renderDialog()}
+function pSelD(d){dialogForm.milestones[openPI].date=toDS(pY,pM,d);openPI=-1;renderDialog()}
+function pToday(){dialogForm.milestones[openPI].date=new Date().toISOString().split('T')[0];openPI=-1;renderDialog()}
+function pClear(){dialogForm.milestones[openPI].date='';openPI=-1;renderDialog()}
+
+function renderDialog(){
+  if(!dialogForm)return;
+  const isEdit=!!campaigns.find(x=>x.id===dialogForm.id);
+  const fc=dialogForm.milestones.filter(m=>m.date).length;
+
+  const msH=dialogForm.milestones.map((ms,i)=>{
+    const def=MS_DEFS[i];
+    let pkH='';
+    if(openPI===i){
+      const dim=dimM(pY,pM),first=fowM(pY,pM);
+      let cells=[];
+      for(let x=0;x<first;x++)cells.push('<button class="dp-d" disabled></button>');
+      for(let d=1;d<=dim;d++){
+        const ds=toDS(pY,pM,d),sel=ms.date===ds;
+        const td=new Date(),isT=pY===td.getFullYear()&&pM===td.getMonth()+1&&d===td.getDate();
+        const we=isWE(ds);
+        let cls='dp-d';if(sel)cls+=' sel';else if(isT)cls+=' tod';if(we&&!sel)cls+=' we';
+        cells.push(`<button class="${cls}" onclick="pSelD(${d})">${d}</button>`);
+      }
+      while(cells.length%7)cells.push('<button class="dp-d" disabled></button>');
+      let wkH='';for(let r=0;r<cells.length;r+=7)wkH+=`<div class="dp-wk">${cells.slice(r,r+7).join('')}</div>`;
+      const yO=Array.from({length:10},(_,i)=>new Date().getFullYear()-2+i).map(y=>`<option value="${y}"${y===pY?' selected':''}>${y}</option>`).join('');
+      const mO=Array.from({length:12},(_,i)=>i+1).map(m=>`<option value="${m}"${m===pM?' selected':''}>${m}月</option>`).join('');
+      pkH=`<div class="dp-dd"><div class="dp-nav"><button onclick="pPrev()">◀</button><div style="display:flex;gap:6px"><select onchange="pY=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${yO}</select><select onchange="pM=+this.value;renderDialog()" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px">${mO}</select></div><button onclick="pNext()">▶</button></div><div class="dp-wk">${['日','一','二','三','四','五','六'].map((w,wi)=>`<div style="font-size:11px;color:${wi===0||wi===6?'#e94560':'#555'};padding:4px">${w}</div>`).join('')}</div>${wkH}<div style="display:flex;gap:6px;margin-top:8px"><button class="qb" onclick="pToday()">今天</button><button class="qb" onclick="pClear()" style="color:#e94560">清除</button></div><div style="font-size:10px;color:#444;margin-top:6px"><span style="color:#e9456088;text-decoration:line-through">假日</span> 不計入工作天</div></div>`;
+    }
+    return `<div style="display:flex;align-items:flex-start;gap:8px"><div style="width:10px;height:10px;border-radius:50%;background:${def.color};flex-shrink:0;margin-top:12px"></div><div style="width:90px;flex-shrink:0;margin-top:8px"><div style="font-size:13px;color:#ccc">${ms.label}</div>${def.biz>0?`<div style="font-size:10px;color:#444">+${def.biz}工作天</div>`:''}</div><div style="flex:1;position:relative"><button class="dp-tr" onclick="togglePicker(${i})" style="color:${ms.date?'#fff':'#555'}"><span>${ms.date?fCN(ms.date):'點選選擇日期'}</span><span style="color:#555;font-size:16px">📅</span></button>${pkH}</div></div>`;
+  }).join('');
+
+  document.getElementById('modal').innerHTML=`<div class="mo" onclick="if(event.target===this)closeDialog()"><div class="mb"><h3>${isEdit?'編輯檔期':'新增檔期'}</h3><label class="lbl">聯絡人<input class="inp" value="${dialogForm.contact}" oninput="dialogForm.contact=this.value" placeholder="例：Yun 分機 6997"></label><label class="lbl">檔期名稱<input class="inp" value="${dialogForm.name}" oninput="dialogForm.name=this.value" placeholder="例：Training power"></label><label class="lbl">項目執行窗口<input class="inp" value="${dialogForm.window}" oninput="dialogForm.window=this.value" placeholder="選填"></label><div style="margin-top:12px;padding:12px 14px;background:#0d0d0d;border-radius:10px;border:1px solid #222"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><div style="font-size:14px;color:#fff;font-weight:700">📅 里程碑日期</div><button class="btn sm" onclick="autoFill()" ${fc===0?'disabled':''} style="${fc>0?'':'background:#333'}">⚡ 自動推算</button></div><div style="font-size:11px;color:#666;line-height:1.6;padding:8px 10px;background:#111;border-radius:8px;margin-bottom:10px">💡 填<strong style="color:#e94560">任一個</strong>日期 → 按「自動推算」→ 全部算出（跳過六日）</div>${msH}</div><label class="lbl" style="margin-top:12px">備註<input class="inp" value="${dialogForm.note||''}" oninput="dialogForm.note=this.value" placeholder="選填"></label><div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end"><button class="btn sec" onclick="closeDialog()">取消</button><button class="btn" onclick="saveCampaign()">${isEdit?'儲存':'新增'}</button></div></div></div>`;
+}
+
+document.addEventListener('click',e=>{if(openPI>=0&&!e.target.closest('.dp-dd')&&!e.target.closest('.dp-tr')){openPI=-1;if(dialogForm)renderDialog()}});
+
+// ─── Gantt ───
+function renderGantt(){
+  const ad=campaigns.flatMap(c=>c.milestones.map(m=>m.date).filter(Boolean));
+  if(!ad.length)return'';
+  ad.sort();
+  const ea=addD(ad[0],-3),la=addD(ad[ad.length-1],3),sp=diffD(ea,la);
+  if(sp<=0)return'';
+  const step=Math.max(1,Math.floor(sp/16));
+  let mkH='',weH='';
+  for(let i=0;i<=sp;i+=step){const d=addD(ea,i),p=(i/sp)*100;const c=isWE(d)?'#e9456066':'#444';mkH+=`<div style="position:absolute;left:${p}%;bottom:4px;font-size:10px;color:${c};transform:translateX(-50%);white-space:nowrap">${fSh(d)}<span style="display:block;text-align:center;font-size:9px;color:${isWE(d)?'#e9456044':'#333'}">(${gWD(d)})</span></div>`}
+  for(let i=0;i<=sp;i++){const d=addD(ea,i);if(isWE(d))weH+=`<div style="position:absolute;left:${(i/sp)*100}%;width:${(1/sp)*100}%;top:0;bottom:0;background:rgba(233,69,96,.06)"></div>`}
+  const td=new Date().toISOString().split('T')[0],tp=(diffD(ea,td)/sp)*100;
+  const tdH=tp>=0&&tp<=100?`<div style="position:absolute;left:${tp}%;top:0;bottom:0;width:2px;background:#e94560;z-index:5"><div style="position:absolute;top:2px;left:-10px;font-size:9px;color:#e94560;font-weight:700">今日</div></div>`:'';
+  let rowH='';
+  campaigns.forEach(c=>{
+    const ds=c.milestones.map(m=>m.date).filter(Boolean);if(!ds.length)return;
+    let bH=weH;
+    c.milestones.forEach((ms,i)=>{if(!ms.date)return;const nx=c.milestones.slice(i+1).find(m=>m.date);if(!nx)return;const l=(diffD(ea,ms.date)/sp)*100,w=(diffD(ms.date,nx.date)/sp)*100;const ph=MS_DEFS[i]?.phase||1;const br=i===0?'5px 0 0 5px':(!c.milestones.slice(i+2).find(m=>m.date)?'0 5px 5px 0':'0');bH+=`<div title="${ms.label}→${nx.label}：${diffD(ms.date,nx.date)}天" style="position:absolute;left:${l}%;width:${Math.max(w,.3)}%;top:10px;bottom:10px;background:${PH_BG[ph]||'#333'};border-radius:${br};box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`});
+    c.milestones.forEach((ms,i)=>{if(!ms.date)return;const l=(diffD(ea,ms.date)/sp)*100;bH+=`<div title="${ms.label}：${fCN(ms.date)}" style="position:absolute;left:${l}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;z-index:3;background:${MS_DEFS[i]?.color||'#888'};border:2px solid #111"></div>`});
+    rowH+=`<div style="display:flex;border-bottom:1px solid #1a1a1a;min-height:52px"><div style="width:180px;min-width:180px;padding:8px 12px;border-right:1px solid #222;flex-shrink:0;display:flex;flex-direction:column;justify-content:center"><div style="font-weight:700;font-size:13px;color:#fff">${c.name}</div><div style="font-size:10px;color:#555;margin-top:2px">${c.contact}</div></div><div style="flex:1;position:relative;padding:6px 0">${bH}</div></div>`;
+  });
+  const lgH=MS_DEFS.map(m=>`<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#666"><div style="width:8px;height:8px;border-radius:50%;background:${m.color}"></div>${m.label}</div>`).join('')+`<div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e94560"><div style="width:10px;height:2px;background:#e94560"></div>今日</div><div style="display:flex;align-items:center;gap:4px;font-size:11px;color:#e9456044"><div style="width:10px;height:10px;background:rgba(233,69,96,.1);border-radius:2px"></div>假日</div>`;
+  return`<div style="background:#111;border-radius:12px;border:1px solid #222;overflow:hidden;margin-bottom:24px"><div style="display:flex;border-bottom:1px solid #333"><div style="width:180px;min-width:180px;padding:10px 12px;font-size:12px;color:#555;border-right:1px solid #222;flex-shrink:0">檔期 (${campaigns.length})</div><div style="flex:1;position:relative;height:44px;overflow:hidden">${weH}${mkH}${tdH}</div></div>${rowH}<div style="display:flex;gap:14px;padding:10px 12px;border-top:1px solid #222;flex-wrap:wrap">${lgH}</div></div>`;
+}
+
+// ─── Card ───
+function renderCard(c){
+  const msH=c.milestones.map((ms,i)=>{
+    const col=ms.date?(isWE(ms.date)?'#e94560':'#ccc'):'#333';
+    const warn=ms.date&&isWE(ms.date)?'<span style="font-size:10px;margin-left:4px">⚠️假日</span>':'';
+    return`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px"><div style="width:8px;height:8px;border-radius:50%;background:${MS_DEFS[i]?.color||'#555'};flex-shrink:0"></div><div style="width:85px;color:#888;flex-shrink:0">${ms.label}</div><div style="color:${col}">${ms.date?fCN(ms.date):'—'}${warn}</div></div>`;
+  }).join('');
+  const ds=c.milestones.map(m=>m.date).filter(Boolean);
+  const totH=ds.length>=2?`<div style="border-top:1px solid #222;margin-top:8px;padding-top:8px;font-size:12px;color:#e94560;font-weight:600">全程 ${diffD(ds[0],ds[ds.length-1])} 天（含假日）</div>`:'';
+  return`<div class="card"><div style="position:absolute;top:12px;right:12px;display:flex;gap:4px"><button class="btn-t" onclick="openDialog('${c.id}')">✎</button><button class="btn-t" style="color:#e94560" onclick="deleteCampaign('${c.id}')">✕</button></div><div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;padding-right:50px">${c.name}</div><div style="font-size:11px;color:#555;margin-bottom:12px">${c.contact}${c.window?' ｜ '+c.window:''}</div>${msH}${totH}</div>`;
+}
+
+// ─── Overview ───
+function renderOverview(){
+  const phs=[{n:'01',nm:'設計發包',d:'10工作天',a:'#e94560',dk:'#1a1a2e'},{n:'02',nm:'生產',d:'8工作天',a:'#0f3460',dk:'#16213e'},{n:'03',nm:'寄貨',d:'3工作天',a:'#533483',dk:'#1a1a2e'},{n:'04',nm:'施工',d:'3工作天+一晚',a:'#8e44ad',dk:'#0f3460'}];
+  return`<div style="padding:16px;background:#111;border-radius:12px;margin-bottom:20px;border:1px solid #222"><div style="font-size:12px;color:#555;margin-bottom:10px;letter-spacing:2px">ADIDAS TAIWAN 大型檔期標準流程（工作天計算，跳過六日）</div><div style="display:flex;gap:0;align-items:stretch">${phs.map((p,i)=>`<div style="flex:1;position:relative"><div style="background:linear-gradient(135deg,${p.a},${p.dk});border-radius:${i===0?'8px 0 0 8px':i===3?'0 8px 8px 0':'0'};padding:10px 12px;height:100%;display:flex;flex-direction:column;justify-content:center;${i<3?'border-right:2px solid #0a0a0a':''}"><div style="font-size:10px;color:rgba(255,255,255,.5)">${p.n}</div><div style="font-size:14px;font-weight:700;color:#fff">${p.nm}</div><div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:2px">${p.d}</div></div>${i<3?'<div style="position:absolute;right:-7px;top:50%;transform:translateY(-50%);color:#e94560;font-size:14px;z-index:2">▸</div>':''}</div>`).join('')}</div><div style="text-align:right;font-size:13px;color:#e94560;font-weight:700;margin-top:8px">總工期：24 工作天 + 一晚</div></div>`;
+}
+
+// ─── Main Render ───
+function render(){
+  document.getElementById('app').innerHTML=`
+    <div id="toast" class="toast"></div>
+    <div id="loading" class="loading-overlay" style="display:none"><div class="loading-box"><div class="spinner"></div><div class="msg">處理中...</div></div></div>
+
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
       <div>
-        <h1>大型檔期行程管理</h1>
-        <div class="sub">ADIDAS TAIWAN — CAMPAIGN SCHEDULE MANAGER</div>
+        <h1 style="font-size:26px;font-weight:800;background:linear-gradient(135deg,#e94560,#533483);-webkit-background-clip:text;-webkit-text-fill-color:transparent">大型檔期行程管理</h1>
+        <div style="font-size:11px;color:#444;margin-top:2px;letter-spacing:2px">ADIDAS TAIWAN — CAMPAIGN SCHEDULE MANAGER</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="openDialog()">＋ 新增檔期</button>
-        ${campaigns.length ? '<button class="btn secondary" onclick="exportCSV()">⤓ 匯出 CSV</button>' : ''}
       </div>
     </div>
 
-    <!-- 標準流程 -->
-    <div class="overview">
-      <div class="title">ADIDAS TAIWAN 大型檔期標準流程（工作天計算，跳過六日）</div>
-      <div class="phases">
-        ${[
-          { num:'01', name:'設計發包', days:'10工作天', accent:'#e94560', dark:'#1a1a2e' },
-          { num:'02', name:'生產', days:'8工作天', accent:'#0f3460', dark:'#16213e' },
-          { num:'03', name:'寄貨', days:'3工作天', accent:'#533483', dark:'#1a1a2e' },
-          { num:'04', name:'施工', days:'3工作天+一晚', accent:'#8e44ad', dark:'#0f3460' },
-        ].map((ph,i) => `
-          <div style="flex:1;position:relative">
-            <div class="phase" style="background:linear-gradient(135deg,${ph.accent},${ph.dark});border-radius:${i===0?'8px 0 0 8px':i===3?'0 8px 8px 0':'0'};height:100%;${i<3?'border-right:2px solid #0a0a0a':''}">
-              <div class="num">${ph.num}</div>
-              <div class="name">${ph.name}</div>
-              <div class="days">${ph.days}</div>
-            </div>
-            ${i<3?'<div class="phase-arrow">▸</div>':''}
-          </div>
-        `).join('')}
-      </div>
-      <div class="total">總工期：24 工作天 + 一晚</div>
+    ${renderOverview()}
+
+    <div class="sync-bar">
+      <button class="btn sync" onclick="syncRead()" ${syncing?'disabled':''}>${syncing?'同步中...':'↻ 從 Google Sheets 同步'}</button>
+      ${lastSync?`<span class="status">上次同步：${lastSync}</span>`:'<span class="status">點選同步載入試算表資料</span>'}
+      <a href="https://docs.google.com/spreadsheets/d/1s9w-Eop2gUZwfhl7lT_BDffPjom7xY4uvsPZ0Q-qWLw/edit" target="_blank" style="font-size:12px;color:#e94560;text-decoration:none">↗ 開啟試算表</a>
     </div>
 
-    <!-- Sheets 設定 -->
-    <div class="sheets-config">
-      <div class="sheets-bar">
-        <button class="btn" onclick="settingsOpen=!settingsOpen;render()">${settingsOpen ? '▲ 收合設定' : '⚙ Google Sheets 設定'}</button>
-        ${config.sheetId ? `<button class="btn sync" onclick="syncSheets()" ${syncing?'disabled':''}>${syncing?'同步中...':'↻ 從 Sheets 同步'}</button>` : ''}
-        ${config.sheetId ? `<a class="sheets-link" href="https://docs.google.com/spreadsheets/d/${config.sheetId}/edit" target="_blank">↗ 開啟試算表</a>` : ''}
-        ${lastSync ? `<span class="sync-time">上次：${lastSync}</span>` : ''}
-      </div>
-      ${settingsOpen ? `
-      <div class="sheets-panel">
-        <label class="label">試算表 ID（從網址 /d/ 到 /edit 之間複製）
-          <input class="input" value="${config.sheetId||''}" onchange="config.sheetId=this.value;save()">
-        </label>
-        <label class="label">預設年份（你的表格日期沒有年份）
-          <input class="input" type="number" value="${config.defaultYear||2026}" onchange="config.defaultYear=parseInt(this.value)||2026;save()">
-        </label>
-        <div class="hint">
-          ✅ <strong>免 API Key！</strong>只要試算表設為「知道連結的任何人可檢視」，就能直接同步。<br>
-          格式：A: 聯絡人 ｜ B: 檔期項目 ｜ C: 項目執行窗口 ｜ D: 日期 ｜ E: 執行項目
-        </div>
-      </div>` : ''}
-    </div>
-
-    <!-- 甘特圖 -->
     ${renderGantt()}
 
-    <!-- 檔期卡片 -->
-    ${campaigns.length ? `<div class="cards">${campaigns.map(renderCard).join('')}</div>` : `
-    <div class="empty">
-      <div class="icon">📋</div>
-      <div class="text">尚無檔期資料</div>
-      <div class="hint">新增檔期或連結 Google Sheets 同步</div>
-    </div>`}
+    ${campaigns.length?`<div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">${campaigns.map(renderCard).join('')}</div>`:`<div style="text-align:center;padding:50px 20px;color:#333"><div style="font-size:48px;margin-bottom:12px">📋</div><div style="font-size:15px;color:#555">尚無檔期資料</div><div style="font-size:12px;margin-top:4px">按「同步」載入現有資料，或「新增檔期」建立新的</div></div>`}
 
-    <!-- Modal -->
     <div id="modal"></div>
   `;
 }
 
-// ─── 甘特圖 ───
-function renderGantt() {
-  const allDates = campaigns.flatMap(c => c.milestones.map(m=>m.date).filter(Boolean));
-  if (!allDates.length) return '';
-  allDates.sort();
-  const earliest = addD(allDates[0], -3);
-  const latest = addD(allDates[allDates.length-1], 3);
-  const span = diffD(earliest, latest);
-  if (span <= 0) return '';
-
-  const step = Math.max(1, Math.floor(span/16));
-  let markersHTML = '';
-  for (let i=0; i<=span; i+=step) {
-    const d = addD(earliest, i);
-    const pct = (i/span)*100;
-    const col = isWE(d) ? '#e9456066' : '#444';
-    const col2 = isWE(d) ? '#e9456044' : '#333';
-    markersHTML += `<div style="position:absolute;left:${pct}%;bottom:4px;font-size:10px;color:${col};transform:translateX(-50%);white-space:nowrap">${fmtShort(d)}<span style="display:block;text-align:center;font-size:9px;color:${col2}">(${getWD(d)})</span></div>`;
-  }
-
-  // 週末背景
-  let weHTML = '';
-  for (let i=0; i<=span; i++) {
-    const d = addD(earliest, i);
-    if (isWE(d)) weHTML += `<div style="position:absolute;left:${(i/span)*100}%;width:${(1/span)*100}%;top:0;bottom:0;background:rgba(233,69,96,.06)"></div>`;
-  }
-
-  // 今日
-  const today = new Date().toISOString().split('T')[0];
-  const todayPct = (diffD(earliest, today)/span)*100;
-  const todayHTML = todayPct>=0 && todayPct<=100 ? `<div style="position:absolute;left:${todayPct}%;top:0;bottom:0;width:2px;background:#e94560;z-index:5"><div style="position:absolute;top:2px;left:-10px;font-size:9px;color:#e94560;font-weight:700">今日</div></div>` : '';
-
-  // 行
-  let rowsHTML = '';
-  campaigns.forEach(c => {
-    const dates = c.milestones.map(m=>m.date).filter(Boolean);
-    if (!dates.length) return;
-    let barsHTML = weHTML; // 複製週末背景到每一行
-    c.milestones.forEach((ms,i) => {
-      if (!ms.date) return;
-      const next = c.milestones.slice(i+1).find(m=>m.date);
-      if (!next) return;
-      const l = (diffD(earliest,ms.date)/span)*100;
-      const w = (diffD(ms.date,next.date)/span)*100;
-      const ph = MILESTONE_DEFS[i]?.phase||1;
-      const br = i===0 ? '5px 0 0 5px' : (!c.milestones.slice(i+2).find(m=>m.date) ? '0 5px 5px 0' : '0');
-      barsHTML += `<div title="${ms.label}→${next.label}：${diffD(ms.date,next.date)}天" style="position:absolute;left:${l}%;width:${Math.max(w,.3)}%;top:10px;bottom:10px;background:${PHASE_BG[ph]||'#333'};border-radius:${br};box-shadow:0 2px 6px rgba(0,0,0,.3)"></div>`;
-    });
-    c.milestones.forEach((ms,i) => {
-      if (!ms.date) return;
-      const l = (diffD(earliest,ms.date)/span)*100;
-      barsHTML += `<div title="${ms.label}：${fmtCN(ms.date)}" style="position:absolute;left:${l}%;top:50%;transform:translate(-50%,-50%);width:10px;height:10px;border-radius:50%;z-index:3;background:${MILESTONE_DEFS[i]?.color||'#888'};border:2px solid #111"></div>`;
-    });
-    rowsHTML += `<div class="gantt-row"><div class="gantt-row-label"><div class="name">${c.name}</div><div class="contact">${c.contact}</div></div><div class="gantt-row-bars">${barsHTML}</div></div>`;
-  });
-
-  const legendHTML = MILESTONE_DEFS.map(m => `<div class="legend-item"><div style="width:8px;height:8px;border-radius:50%;background:${m.color}"></div>${m.label}</div>`).join('') +
-    `<div class="legend-item" style="color:#e94560"><div style="width:10px;height:2px;background:#e94560"></div>今日</div>` +
-    `<div class="legend-item" style="color:#e9456044"><div style="width:10px;height:10px;background:rgba(233,69,96,.1);border-radius:2px"></div>假日</div>`;
-
-  return `<div class="gantt"><div class="gantt-header"><div class="gantt-label-col">檔期 (${campaigns.length})</div><div class="gantt-timeline">${weHTML}${markersHTML}${todayHTML}</div></div>${rowsHTML}<div class="gantt-legend">${legendHTML}</div></div>`;
-}
-
-// ─── 卡片 ───
-function renderCard(c) {
-  const msHTML = c.milestones.map((ms,i) => {
-    const dateStr = ms.date ? fmtCN(ms.date) : '—';
-    const col = ms.date ? (isWE(ms.date) ? '#e94560' : '#ccc') : '#333';
-    const warn = ms.date && isWE(ms.date) ? '<span style="font-size:10px;margin-left:4px">⚠️假日</span>' : '';
-    return `<div class="ms-row"><div class="ms-dot" style="background:${MILESTONE_DEFS[i]?.color||'#555'}"></div><div class="ms-label">${ms.label}</div><div style="color:${col}">${dateStr}${warn}</div></div>`;
-  }).join('');
-
-  const dates = c.milestones.map(m=>m.date).filter(Boolean);
-  const totalHTML = dates.length >= 2 ? `<div class="total-line">全程 ${diffD(dates[0],dates[dates.length-1])} 天（含假日）</div>` : '';
-
-  return `<div class="card">
-    <div class="card-actions">
-      <button class="btn-tiny" onclick="openDialog('${c.id}')">✎</button>
-      <button class="btn-tiny" style="color:#e94560" onclick="deleteCampaign('${c.id}')">✕</button>
-    </div>
-    <div class="title">${c.name}</div>
-    <div class="meta">${c.contact}${c.window ? ' ｜ '+c.window : ''}</div>
-    ${msHTML}${totalHTML}
-  </div>`;
-}
-
-// ─── Dialog ───
-let dialogForm = null;
-
-function openDialog(editId) {
-  if (editId) {
-    const c = campaigns.find(x => x.id === editId);
-    dialogForm = JSON.parse(JSON.stringify(c));
-  } else {
-    dialogForm = {
-      id: '', name: '', contact: '', window: '', note: '',
-      milestones: MILESTONE_DEFS.map(m => ({ key: m.key, label: m.label, date: '' }))
-    };
-  }
-  renderDialog();
-}
-
-function closeDialog() {
-  dialogForm = null;
-  document.getElementById('modal').innerHTML = '';
-}
-
-function saveDialog() {
-  if (!dialogForm.name.trim()) { alert('請輸入檔期名稱'); return; }
-  if (!dialogForm.id) dialogForm.id = Date.now().toString();
-  const exists = campaigns.find(x => x.id === dialogForm.id);
-  if (exists) campaigns = campaigns.map(x => x.id === dialogForm.id ? dialogForm : x);
-  else campaigns.push(dialogForm);
-  save(); closeDialog(); render();
-  showToast(exists ? '已更新' : '已新增', 'success');
-}
-
-function autoFillDialog() {
-  let anchorIdx = -1;
-  for (let i=0; i<dialogForm.milestones.length; i++) { if (dialogForm.milestones[i].date) { anchorIdx = i; break; } }
-  if (anchorIdx === -1) for (let i=dialogForm.milestones.length-1; i>=0; i--) { if (dialogForm.milestones[i].date) { anchorIdx = i; break; } }
-  if (anchorIdx === -1) { alert('請先選擇任意一個里程碑的日期'); return; }
-
-  const anchorDate = dialogForm.milestones[anchorIdx].date;
-  const anchorBiz = CUMULATIVE_BIZ_DAYS[anchorIdx];
-  for (let i=0; i<dialogForm.milestones.length; i++) {
-    if (i === anchorIdx) continue;
-    const diff = CUMULATIVE_BIZ_DAYS[i] - anchorBiz;
-    dialogForm.milestones[i].date = diff >= 0 ? addBD(anchorDate, diff) : subBD(anchorDate, Math.abs(diff));
-  }
-  renderDialog();
-}
-
-function setDialogMsDate(idx, date) {
-  dialogForm.milestones[idx].date = date;
-  renderDialog();
-}
-
-// DatePicker 狀態
-let openPickerIdx = -1;
-let pickerYear = new Date().getFullYear();
-let pickerMonth = new Date().getMonth() + 1;
-
-function togglePicker(idx) {
-  if (openPickerIdx === idx) { openPickerIdx = -1; }
-  else {
-    openPickerIdx = idx;
-    const d = dialogForm.milestones[idx].date;
-    if (d) { const dt = new Date(d); pickerYear = dt.getFullYear(); pickerMonth = dt.getMonth()+1; }
-    else { const now = new Date(); pickerYear = now.getFullYear(); pickerMonth = now.getMonth()+1; }
-  }
-  renderDialog();
-}
-
-function pickerPrev() { if (pickerMonth===1){pickerMonth=12;pickerYear--;}else pickerMonth--; renderDialog(); }
-function pickerNext() { if (pickerMonth===12){pickerMonth=1;pickerYear++;}else pickerMonth++; renderDialog(); }
-function pickerSetYear(y) { pickerYear=y; renderDialog(); }
-function pickerSetMonth(m) { pickerMonth=m; renderDialog(); }
-function pickerSelect(d) { dialogForm.milestones[openPickerIdx].date = toDS(pickerYear, pickerMonth, d); openPickerIdx=-1; renderDialog(); }
-function pickerToday() { const t=new Date().toISOString().split('T')[0]; dialogForm.milestones[openPickerIdx].date=t; openPickerIdx=-1; renderDialog(); }
-function pickerClear() { dialogForm.milestones[openPickerIdx].date=''; openPickerIdx=-1; renderDialog(); }
-
-function renderDialog() {
-  if (!dialogForm) return;
-  const isEdit = !!campaigns.find(x => x.id === dialogForm.id);
-  const filledCount = dialogForm.milestones.filter(m=>m.date).length;
-
-  const msHTML = dialogForm.milestones.map((ms, i) => {
-    const def = MILESTONE_DEFS[i];
-    const isOpen = openPickerIdx === i;
-
-    // DatePicker
-    let pickerHTML = '';
-    if (isOpen) {
-      const dim = dimMonth(pickerYear, pickerMonth);
-      const first = fow(pickerYear, pickerMonth);
-      let weeksHTML = '';
-      let cells = [];
-      for (let x=0; x<first; x++) cells.push('<button class="dp-day" disabled></button>');
-      for (let d=1; d<=dim; d++) {
-        const ds = toDS(pickerYear, pickerMonth, d);
-        const sel = ms.date === ds;
-        const td = new Date();
-        const isT = pickerYear===td.getFullYear() && pickerMonth===td.getMonth()+1 && d===td.getDate();
-        const we = isWE(ds);
-        let cls = 'dp-day';
-        if (sel) cls += ' selected';
-        else if (isT) cls += ' today';
-        if (we && !sel) cls += ' weekend';
-        cells.push(`<button class="${cls}" onclick="pickerSelect(${d})">${d}</button>`);
-      }
-      while (cells.length % 7 !== 0) cells.push('<button class="dp-day" disabled></button>');
-      for (let r=0; r<cells.length; r+=7) {
-        weeksHTML += `<div class="dp-week">${cells.slice(r,r+7).join('')}</div>`;
-      }
-
-      const yearOpts = Array.from({length:10},(_,i)=>new Date().getFullYear()-2+i).map(y=>`<option value="${y}" ${y===pickerYear?'selected':''}>${y}</option>`).join('');
-      const monthOpts = Array.from({length:12},(_,i)=>i+1).map(m=>`<option value="${m}" ${m===pickerMonth?'selected':''}>${m}月</option>`).join('');
-
-      pickerHTML = `<div class="dp-dropdown">
-        <div class="dp-nav">
-          <button onclick="pickerPrev()">◀</button>
-          <div style="display:flex;gap:6px">
-            <select class="dp-nav select" onchange="pickerSetYear(+this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px;cursor:pointer">${yearOpts}</select>
-            <select onchange="pickerSetMonth(+this.value)" style="padding:4px 8px;border-radius:6px;border:1px solid #333;background:#111;color:#ccc;font-size:13px;cursor:pointer">${monthOpts}</select>
-          </div>
-          <button onclick="pickerNext()">▶</button>
-        </div>
-        <div class="dp-weekdays">
-          ${['日','一','二','三','四','五','六'].map((w,wi)=>`<div${wi===0||wi===6?' class="weekend"':''}>${w}</div>`).join('')}
-        </div>
-        ${weeksHTML}
-        <div class="dp-footer">
-          <button onclick="pickerToday()">今天</button>
-          <button onclick="pickerClear()" style="color:#e94560">清除</button>
-        </div>
-        <div class="dp-hint"><span class="weekend-demo">假日</span> 不計入工作天</div>
-      </div>`;
-    }
-
-    return `<div class="ms-item">
-      <div class="dot" style="background:${def.color}"></div>
-      <div class="info">
-        <div class="name">${ms.label}</div>
-        ${def.businessDays > 0 ? `<div class="biz">+${def.businessDays}工作天</div>` : ''}
-      </div>
-      <div class="picker" style="position:relative">
-        <button class="dp-trigger" onclick="togglePicker(${i})">
-          <span class="${ms.date?'val':'placeholder'}">${ms.date ? fmtCN(ms.date) : '點選選擇日期'}</span>
-          <span class="icon">📅</span>
-        </button>
-        ${pickerHTML}
-      </div>
-    </div>`;
-  }).join('');
-
-  document.getElementById('modal').innerHTML = `
-    <div class="modal-overlay" onclick="if(event.target===this)closeDialog()">
-      <div class="modal-box">
-        <h3>${isEdit ? '編輯檔期' : '新增檔期'}</h3>
-        <label class="label">聯絡人
-          <input class="input" value="${dialogForm.contact}" oninput="dialogForm.contact=this.value" placeholder="例：Yun 分機 6997">
-        </label>
-        <label class="label">檔期名稱
-          <input class="input" value="${dialogForm.name}" oninput="dialogForm.name=this.value" placeholder="例：Training power">
-        </label>
-        <label class="label">項目執行窗口
-          <input class="input" value="${dialogForm.window}" oninput="dialogForm.window=this.value" placeholder="選填">
-        </label>
-        <div class="ms-block">
-          <div class="ms-block-header">
-            <div class="ms-block-title">📅 里程碑日期</div>
-            <button class="btn small" onclick="autoFillDialog()" ${filledCount===0?'disabled':''} style="${filledCount>0?'':'background:#333'}">⚡ 自動推算</button>
-          </div>
-          <div class="ms-hint">
-            💡 填<strong>任一個</strong>日期，按「自動推算」→ 自動算出全部（跳過六日）<br>
-            例：填「閉店後施工 5/13」→ 往前推出平配圖、發包、寄貨日期
-          </div>
-          ${msHTML}
-        </div>
-        <label class="label">備註
-          <input class="input" value="${dialogForm.note||''}" oninput="dialogForm.note=this.value" placeholder="選填">
-        </label>
-        <div class="modal-footer">
-          <button class="btn secondary" onclick="closeDialog()">取消</button>
-          <button class="btn" onclick="saveDialog()">${isEdit ? '儲存' : '新增'}</button>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-// 點擊外部關閉日曆
-document.addEventListener('click', (e) => {
-  if (openPickerIdx >= 0 && !e.target.closest('.picker') && !e.target.closest('.dp-dropdown')) {
-    openPickerIdx = -1;
-    if (dialogForm) renderDialog();
-  }
-});
-
-// 初始渲染
+// ─── Init ───
 render();
+// 自動載入
+syncRead();
 </script>
 </body>
 </html>
